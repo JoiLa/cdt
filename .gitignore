@@ -1,0 +1,5 @@
+/data.sqlite
+/go.sum
+/.idea
+data.sqlite
+/docker/*

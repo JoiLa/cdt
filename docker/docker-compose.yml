@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+  cdt-mysql8-service:
+    image: mysql:8.0
+    privileged: true
+    container_name: 'cdt-mysql8-service'
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci #设置utf8字符集
+    restart: always
+    environment:
+      - MYSQL_DATABASE=cdt_database
+      - MYSQL_ROOT_PASSWORD=nOqbDNpEveiY63Fr
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    ports:
+      - 53306:3306

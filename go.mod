@@ -1,4 +1,4 @@
-module cdt
+module github.com/JoiLa/cdt
 
 go 1.19
 

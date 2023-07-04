@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"cdt"
+	"github.com/JoiLa/cdt"
 )
 
 func TestParseInt(t *testing.T) {

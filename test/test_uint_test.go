@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"cdt"
+	"github.com/JoiLa/cdt"
 )
 
 func TestParseUint(t *testing.T) {

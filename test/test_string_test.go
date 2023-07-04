@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"cdt"
+	"github.com/JoiLa/cdt"
 )
 
 func TestParseString(t *testing.T) {

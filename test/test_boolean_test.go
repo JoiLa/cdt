@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"cdt"
+	"github.com/JoiLa/cdt"
 )
 
 func TestParseBoolean(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"cdt"
+	"github.com/JoiLa/cdt"
 )
 
 type jsonObject struct {

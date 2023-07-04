@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"cdt"
+	"github.com/JoiLa/cdt"
 )
 
 func TestParseFloat64(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"cdt"
+	"github.com/JoiLa/cdt"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"

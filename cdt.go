@@ -253,7 +253,7 @@ func EncodeDataForTags(v any) {
 		typ = value.Type()
 		break
 	}
-	if typ.Kind() == reflect.Ptr {
+	if typ.Kind() == reflect.Ptr || typ.Kind() == reflect.Interface {
 		EncodeDataForTags(value.Elem())
 		return
 	}
@@ -326,7 +326,7 @@ func DecodeDataForTags(v any) {
 		typ = value.Type()
 		break
 	}
-	if typ.Kind() == reflect.Ptr {
+	if typ.Kind() == reflect.Ptr || typ.Kind() == reflect.Interface {
 		DecodeDataForTags(value.Elem())
 		return
 	}

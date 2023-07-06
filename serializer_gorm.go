@@ -25,7 +25,12 @@ func (c *DataRaw) Scan(ctx context.Context, field *schema.Field, dst reflect.Val
 	configTagKV := parseConfigCdtTagToKV(field.StructField)
 	if len(configTagKV) > 0 {
 		currentFieldValueRef := reflect.ValueOf(c)
-		decodeDataForCdtTagKV(currentFieldValueRef.Elem(), configTagKV)
+		if isPtr(currentFieldValueRef) || isInterface(currentFieldValueRef) {
+			for isPtr(currentFieldValueRef) || isInterface(currentFieldValueRef) {
+				currentFieldValueRef = currentFieldValueRef.Elem()
+			}
+		}
+		decodeDataForCdtTagKV(currentFieldValueRef, configTagKV)
 	}
 	return nil
 }

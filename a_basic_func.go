@@ -13,6 +13,11 @@ func isPtr(refVal reflect.Value) bool {
 	return refVal.Kind() == reflect.Ptr
 }
 
+// isInterface is_interface
+func isInterface(refVal reflect.Value) bool {
+	return refVal.Kind() == reflect.Interface
+}
+
 // isString is_string
 func isString(refVal reflect.Value) bool {
 	if isPtr(refVal) {
@@ -227,6 +232,11 @@ func isFloat64(refVal reflect.Value) bool {
 		return true
 	}
 	return false
+}
+
+// isNil is_nil
+func isNil(refVal reflect.Value) bool {
+	return refVal.Kind() == reflect.Invalid
 }
 
 // isTime is_time

@@ -158,7 +158,7 @@ func (i *convert) IsFloat64() bool {
 
 // IsNil is_null
 func (i *convert) IsNil() bool {
-	return i.GetOriginValRef().Kind() == reflect.Invalid
+	return isNil(i.GetOriginValRef())
 }
 
 // IsTime is_time
@@ -261,7 +261,10 @@ func EncodeDataForTags(v any) {
 		return
 	}
 	switch value.Interface().(type) {
-	case DataRaw:
+	case DataRaw, *DataRaw:
+		if !value.CanAddr() {
+			return
+		}
 		sourceDataRawPtr := value.Addr().Interface().(*DataRaw)
 		if len(sourceDataRawPtr.ctdStructTagKV) <= 0 {
 			return
@@ -272,9 +275,19 @@ func EncodeDataForTags(v any) {
 	//
 	for i := 0; i < typ.NumField(); i++ {
 		currentFieldValueRef := value.Field(i)
+		if isPtr(currentFieldValueRef) || isInterface(currentFieldValueRef) {
+			for isPtr(currentFieldValueRef) || isInterface(currentFieldValueRef) {
+				currentFieldValueRef = currentFieldValueRef.Elem()
+			}
+		}
 		currentFieldValue := currentFieldValueRef.Interface()
+		sourceDataRawPtr := new(DataRaw)
 		switch currentFieldValue.(type) {
 		case DataRaw:
+			if !currentFieldValueRef.CanAddr() {
+				continue
+			}
+			sourceDataRawPtr = currentFieldValueRef.Addr().Interface().(*DataRaw)
 			break
 		default:
 			if currentFieldValueRef.Kind() == reflect.Struct {
@@ -284,7 +297,6 @@ func EncodeDataForTags(v any) {
 			}
 			continue
 		}
-		sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 		var configTagKV ctdStructTagKV
 		// check has set custom tag
 		if len(sourceDataRawPtr.ctdStructTagKV) > 0 {
@@ -334,7 +346,10 @@ func DecodeDataForTags(v any) {
 		return
 	}
 	switch value.Interface().(type) {
-	case DataRaw:
+	case DataRaw, *DataRaw:
+		if !value.CanAddr() {
+			return
+		}
 		sourceDataRawPtr := value.Addr().Interface().(*DataRaw)
 		if len(sourceDataRawPtr.ctdStructTagKV) <= 0 {
 			return
@@ -344,9 +359,19 @@ func DecodeDataForTags(v any) {
 	}
 	for i := 0; i < typ.NumField(); i++ {
 		currentFieldValueRef := value.Field(i)
+		if isPtr(currentFieldValueRef) || isInterface(currentFieldValueRef) {
+			for isPtr(currentFieldValueRef) || isInterface(currentFieldValueRef) {
+				currentFieldValueRef = currentFieldValueRef.Elem()
+			}
+		}
 		currentFieldValue := currentFieldValueRef.Interface()
+		sourceDataRawPtr := new(DataRaw)
 		switch currentFieldValue.(type) {
 		case DataRaw:
+			if !currentFieldValueRef.CanAddr() {
+				return
+			}
+			sourceDataRawPtr = currentFieldValueRef.Addr().Interface().(*DataRaw)
 			break
 		default:
 			if currentFieldValueRef.Kind() == reflect.Struct {
@@ -356,7 +381,6 @@ func DecodeDataForTags(v any) {
 			}
 			continue
 		}
-		sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 		var configTagKV ctdStructTagKV
 		// check has set custom tag
 		if len(sourceDataRawPtr.ctdStructTagKV) > 0 {
@@ -378,6 +402,10 @@ func DecodeDataForTags(v any) {
 
 // encodeDataForCdtTagKV encode data for tag kv
 func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdStructTagKV) {
+	if !currentFieldValueRef.CanAddr() {
+		return
+	}
+	sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 	for configTagKeyStr, configTagValueStr := range configTagKV {
 		switch strings.ToLower(configTagKeyStr) {
 		case ctdStructTagParamNameType:
@@ -385,7 +413,6 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 			switch strings.ToLower(configTagValueStr) {
 			case ctdStructTagParamNameTypeString:
 				// data type is string
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() || sourceDataRawPtr.IsString() {
 					continue
 				}
@@ -398,7 +425,6 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 			case ctdStructTagParamNameTypeUInt, ctdStructTagParamNameTypeUInt8, ctdStructTagParamNameTypeUInt16, ctdStructTagParamNameTypeUInt32, ctdStructTagParamNameTypeUInt64, ctdStructTagParamNameTypeUIntPtr,
 				ctdStructTagParamNameTypeInt, ctdStructTagParamNameTypeInt8, ctdStructTagParamNameTypeInt16, ctdStructTagParamNameTypeInt32, ctdStructTagParamNameTypeInt64:
 				// data type is uint || int
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() || sourceDataRawPtr.IsInt() {
 					continue
 				}
@@ -410,7 +436,6 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeFloat, ctdStructTagParamNameTypeFloat32, ctdStructTagParamNameTypeFloat64:
 				// data type is float
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() || sourceDataRawPtr.IsFloat() {
 					continue
 				}
@@ -422,7 +447,6 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeBoolean:
 				// data type is boolean
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() || sourceDataRawPtr.IsBoolean() {
 					continue
 				}
@@ -434,7 +458,6 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeNull:
 				// data type is null
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -442,7 +465,6 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeTime:
 				// data type is time
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				// check sourceDataRawPtr data value is time.Time
 				if sourceDataRawPtr.IsNil() {
 					continue
@@ -487,7 +509,6 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeArray, ctdStructTagParamNameTypeObject, ctdStructTagParamNameTypeMap:
 				// data type is array || object
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -508,6 +529,10 @@ func encodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 
 // decodeDataForCdtTagKV decode data for tag kv
 func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdStructTagKV) {
+	if !currentFieldValueRef.CanAddr() {
+		return
+	}
+	sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 	// each tag kv
 	for configTagKeyStr, configTagValueStr := range configTagKV {
 		switch strings.ToLower(configTagKeyStr) {
@@ -516,7 +541,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 			switch strings.ToLower(configTagValueStr) {
 			case ctdStructTagParamNameTypeString:
 				// tag type is string, need convert data value to string
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() || sourceDataRawPtr.IsString() {
 					continue
 				}
@@ -528,7 +552,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeUInt:
 				// tag type is uint, need convert data value to uint
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -540,7 +563,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeUInt8:
 				// tag type is uint8, need convert data value to uint8
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -552,7 +574,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeUInt16:
 				// tag type is uint16, need convert data value to uint16
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -564,7 +585,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeUInt32:
 				// tag type is uint32, need convert data value to uint32
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -576,7 +596,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeUInt64:
 				// tag type is uint64, need convert data value to uint64
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -588,7 +607,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeUIntPtr:
 				// tag type is uintptr, need convert data value to uintptr
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -600,7 +618,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeInt:
 				// tag type is int, need convert data value to int
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -612,7 +629,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeInt8:
 				// tag type is int8, need convert data value to int8
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -624,7 +640,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeInt16:
 				// tag type is int16, need convert data value to int16
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -636,7 +651,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeInt32:
 				// tag type is int32, need convert data value to int32
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -648,7 +662,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeInt64:
 				// tag type is int64, need convert data value to int64
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -660,7 +673,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeFloat32:
 				// tag type is float32, need convert data value to float32
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -672,7 +684,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeFloat, ctdStructTagParamNameTypeFloat64:
 				// tag type is float, need convert data value to float64
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -684,7 +695,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeBoolean:
 				// tag type is boolean, need convert data value to boolean
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() || sourceDataRawPtr.IsBoolean() {
 					continue
 				}
@@ -696,7 +706,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeNull:
 				// tag type is null, need convert data value to nil
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -704,7 +713,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeTime:
 				// tag type is time, need convert data value to time
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				// check data type is time.Time
 				if sourceDataRawPtr.IsTime() {
 					continue
@@ -736,7 +744,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeArray:
 				// data type is array
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() {
 					continue
 				}
@@ -751,7 +758,6 @@ func decodeDataForCdtTagKV(currentFieldValueRef reflect.Value, configTagKV ctdSt
 				break
 			case ctdStructTagParamNameTypeObject, ctdStructTagParamNameTypeMap:
 				// data type is object
-				sourceDataRawPtr := currentFieldValueRef.Addr().Interface().(*DataRaw)
 				if sourceDataRawPtr.IsNil() || sourceDataRawPtr.IsStruct() || sourceDataRawPtr.IsMap() {
 					continue
 				}

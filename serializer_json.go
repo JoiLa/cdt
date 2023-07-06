@@ -6,12 +6,12 @@ import (
 )
 
 // String return string value
-func (i *convert) String() string {
+func (i convert) String() string {
 	return fmt.Sprintf("%v", i.OriginVal)
 }
 
 // MarshalJSON to output non base64 encoded []byte
-func (c *DataRaw) MarshalJSON() ([]byte, error) {
+func (c DataRaw) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.OriginVal)
 }
 
@@ -25,7 +25,7 @@ func (c *DataRaw) UnmarshalJSON(b []byte) error {
 }
 
 // String return string value
-func (c *DataRaw) String() string {
+func (c DataRaw) String() string {
 	return fmt.Sprintf("%v", c.OriginVal)
 }
 
